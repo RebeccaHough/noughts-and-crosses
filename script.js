@@ -3,6 +3,12 @@ let boxes;
 let gameover = false;
 let gameboard = [[null, null, null], [null, null, null], [null, null, null]];
 
+//todo draw lines
+//todo can't win on second game
+//todo accessibility 
+//todo screen sizes
+//todo find a replacement for this: ?.
+
 window.onload = function(e) {
   boxes = document.getElementsByClassName("box");
   for(let box = 0; box < boxes.length; box++) {
@@ -11,60 +17,112 @@ window.onload = function(e) {
 }
 
 /**
- * 
- * @param {HTMLElement} box 
- * @param {Array} coords
+ * Determine whose go it is, add an appropriate image to the box that was clicked on and check for winners
+ * @param {HTMLElement} box html element to add image to
+ * @param {Array} coords x and y of current box in gameboard array
  */
 function addPlayingPiece(box, coords) {
   console.log('[addPlayingPiece] called');
-  console.log(box) 
-    console.log(coords) 
-    console.log(gameboard);
-    console.log(gameboard[coords[0]][coords[1]]);
+  //debugging
+  console.log(coords) 
+  console.log(gameboard);
+  console.log(gameboard[coords[0]][coords[1]]);
     
   if(gameover) return;
   //prevent adding a playing piece to an already filled box
   if(gameboard[coords[0]][coords[1]] !== null) return;
 
   //even/odd determines player
+  let player;
   if(turn % 2 === 0 ) {
     //add nought
     box.innerHTML = '<img src="./assets/nought.png" class="playing-piece"/>';
-    //todo update gameboard
-    gameboard[coords[0]][coords[1]] = 'o';
+    //update gameboard arr
+    player = 'o';
+    gameboard[ coords[0] ][ coords[1] ] = player;
   } else {
     //add cross
     box.innerHTML = '<img src="./assets/cross.png" class="playing-piece"/>';
-    //todo update gameboard
-    gameboard[coords[0]][coords[1]] = 'x';
+    //update gameboard arr
+    player = 'x';
+    gameboard[ coords[0] ][ coords[1] ] = player;
   }
   turn ++;
 
-  checkForWinner(); //todo args
+  checkForWinner(coords, player);
 }
 
 /**
  * 
- * @param {} boxClicked 
+ * @param {Array} boxClicked array of x and y coords of box clicked
+ * @param {string} player 'x' or 'o'
  */
-function checkForWinner(boxClicked) {
-  let winner;
-  
-  //search algorithms woo
-  //recurse
-  //let numAdjacent = 0;
-  //check vertical/horiz adajecent boxes for same type
-  //store any of the same type
-  //search them
-  //if numAdj === 3 return true;
+function checkForWinner(boxClicked, player) {
+  //directions given in clockwise order from top left
+  // [0, 0] [0, 1] [0, 2]
+  // [1, 0] [1, 1] [1, 2]
+  // [2, 0] [2, 1] [2, 2]
+  let directions = [
+    [-1, -1],
+    [-1, 0],
+    [-1, +1],
+    [0, +1],
+    [+1, +1],
+    [+1, 0],
+    [+1, -1],
+    [0, -1],
+  ];
 
-  if(winner) {
-    alert(winner + " wins!") 
+  //search algorithms woo
+
+  //todo what about if two lines win
+  let answers = [];
+  for(let dir of directions) {
+    let ansDir = recurse(boxClicked, dir, player);
+    console.log(ansDir);
+    if(ansDir) 
+      answers.push(ansDir);
+  }
+
+  if(answers.length > 0) {
+    console.log(player.toUpperCase() + " wins!")
+    alert(player.toUpperCase() + " wins!")  //synchronous
+    
     //todo draw line
     //rotate line asset?
 
     gameover = true;
+    restartGame();
   }
+}
+
+/**
+ * 
+ * @param {Array} start the 'starting point' node, an array of [x, y]
+ * @param {Array} direction array of [+/-1 or 0, +/-1 or 0], to be added to nodes in order to search in that direction
+ * @param {string} player 'x' or 'o'
+ */
+function recurse(start, direction, player) {
+  //general idea: choose initial direction and keep going in that direction until edge or 3 same
+  let history = [start];
+  
+  return (function inner(current) {
+    //move to next node
+    current = [ current[0] + direction[0], current[1] + direction[1] ]
+    //check next node
+    //will also fail in array out of bounds cases
+    //todo
+    //so safe. much readable. wow.
+    if(player === gameboard?.[current[0]]?.[current[1]]) {
+      history.push(current);
+      if(history.length === 3) {
+        return history;
+      }
+      return inner(current);
+    } else {
+      return null;
+    }
+  })(start);
 }
 
 function convertToCoords(num) {
@@ -91,13 +149,17 @@ function convertToCoords(num) {
   }
 }
 
-//todo test
+/**
+ * Clear the gameboard array, reset turn tracker and remove x and o images
+ */
 function restartGame() {
   //clear all playing pieces
-  for(let arr of gameboard) {
-    for(let el of arr) {
-      el = null;
-    }
+  gameboard = [[null, null, null], [null, null, null], [null, null, null]];
+  console.log('[restartGame] resetting gameboard', gameboard);
+  //clear up images
+  for(let box of boxes) {
+    box.innerHTML = '';
   }
-  console.log('[restartGame]', gameboard);
+  turn = 1;
+  gameover = false;
 }
