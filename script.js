@@ -5,7 +5,6 @@ let gameboard = [[null, null, null], [null, null, null], [null, null, null]];
 
 //todo draw lines
 //todo fix box changing sizes
-//todo THE ALGORITHM DOESNT WORK, need to search both ways
 
 //todo accessibility 
 //todo screen sizes
@@ -61,19 +60,15 @@ function addPlayingPiece(box, coords) {
  * @param {string} player 'x' or 'o'
  */
 function checkForWinner(boxClicked, player) {
-  //directions given in clockwise order from top left
+  //directions in clockwise order, but stored in pairs of oppsite directions
   // [0, 0] [0, 1] [0, 2]
   // [1, 0] [1, 1] [1, 2]
   // [2, 0] [2, 1] [2, 2]
   let directions = [
-    [-1, -1],
-    [-1, 0],
-    [-1, +1],
-    [0, +1],
-    [+1, +1],
-    [+1, 0],
-    [+1, -1],
-    [0, -1],
+    [ [-1, -1] , [+1, +1] ],
+    [ [-1,  0] , [+1,  0] ],
+    [ [-1, +1] , [+1, -1] ],
+    [ [ 0, +1] , [ 0, -1] ],
   ];
 
   
@@ -82,6 +77,7 @@ function checkForWinner(boxClicked, player) {
   for(let dir of directions) {
     //do search for winner
     let ansDir = recurse(boxClicked, dir, player);
+    console.log(ansDir);
     if(ansDir) 
       answers.push(ansDir);
   }
@@ -128,30 +124,45 @@ function checkForWinner(boxClicked, player) {
  * until 3 consecutive hits, then return the path taken in an array
  * or null if less than 3 consecutive hits were found.
  * @param {Array} start the 'starting point' node, an array of [x, y]
- * @param {Array} direction array of [+/-1 or 0, +/-1 or 0], to be added to nodes in order to search in that direction
+ * @param {Array} direction array of a pair of arrays that take the form: [+/-1 or 0, +/-1 or 0], 
+ * that indicate opposite directions, to be added to nodes in order to search along a line
  * @param {string} player 'x' or 'o'
  * @returns an array of nodes denoting the path taken, or null
  */
 function recurse(start, direction, player) {
   let history = [start];
   
-  return (function inner(current) {
-    //move to next node
-    current = [ current[0] + direction[0], current[1] + direction[1] ]
-    //check next node
+  //use innerL and innerR to check both directions for any matching nodes
+  //not technically left/rights, could be up/down, or diagonal
+  //both functions update the same history array
+  //and maintain node order (i.e. if the starting node is in-between two matching nodes,
+  //this is reflected in the array)
+  
+  (function innerL(current, direction) {
+    //advance to next node 
+    current = [ current[0] + direction[0], current[1] + direction[1] ];
+    //check one direction
     //will also fail in array out of bounds cases
-    //todo
-    //so safe. much readable. wow.
     if(player === gameboard?.[current[0]]?.[current[1]]) {
+      //push to hits list
       history.push(current);
-      if(history.length === 3) {
-        return history;
-      }
-      return inner(current);
-    } else {
-      return null;
-    }
-  })(start);
+      //could do if(history >= 3) return; here but it's pointless given the size of the gameboard
+      return innerL(current, direction);
+    } else return;
+  })(start, direction[0]);
+
+  (function innerR(current, direction) {
+    current = [ current[0] + direction[0], current[1] + direction[1] ];
+    if(player === gameboard?.[current[0]]?.[current[1]]) {
+      //prepend to hits list
+      history.unshift(current);
+      return innerR(current, direction);
+    } else return;
+  })(start, direction[1]);
+
+
+  if(history.length >= 3) return history;
+  else return null;
 }
 
 function convertToCoords(num) {
