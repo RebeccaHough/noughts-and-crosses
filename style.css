@@ -1,10 +1,20 @@
-html, body, #game {
+html, body {
   height: 100%;
   margin: 0;
-  padding: 0s;
+  padding: 0;
+}
+
+.container {
+  /*vertically and horizontally center with margin: auto on child*/
+  height: 100%;
+  width: 100%;
+  display: flex;
 }
 
 #game {
+  height: min(100vh, 100vw); /*viewport height max or width max, whichever is smaller*/
+  width: min(100vh, 100vw); /*viewport height max or width max, whichever is smaller*/
+  margin: auto;
   display: flex;
   flex-direction: column;
 }
@@ -17,7 +27,6 @@ html, body, #game {
 
 .box {
   width: 100%;
-  border: 1px black solid;
 }
 
 .playing-piece {

@@ -4,10 +4,13 @@ let gameover = false;
 let gameboard = [[null, null, null], [null, null, null], [null, null, null]];
 
 //todo draw lines
-//todo can't win on second game
+//todo fix box changing sizes
+//todo THE ALGORITHM DOESNT WORK, need to search both ways
+
 //todo accessibility 
 //todo screen sizes
 //todo find a replacement for this: ?.
+
 
 window.onload = function(e) {
   boxes = document.getElementsByClassName("box");
@@ -24,9 +27,9 @@ window.onload = function(e) {
 function addPlayingPiece(box, coords) {
   console.log('[addPlayingPiece] called');
   //debugging
-  console.log(coords) 
-  console.log(gameboard);
-  console.log(gameboard[coords[0]][coords[1]]);
+  // console.log(coords) 
+  // console.log(gameboard);
+  // console.log(gameboard[coords[0]][coords[1]]);
     
   if(gameover) return;
   //prevent adding a playing piece to an already filled box
@@ -73,37 +76,63 @@ function checkForWinner(boxClicked, player) {
     [0, -1],
   ];
 
-  //search algorithms woo
-
+  
   //todo what about if two lines win
   let answers = [];
   for(let dir of directions) {
+    //do search for winner
     let ansDir = recurse(boxClicked, dir, player);
-    console.log(ansDir);
     if(ansDir) 
       answers.push(ansDir);
   }
 
+  //if the current player has won
   if(answers.length > 0) {
-    console.log(player.toUpperCase() + " wins!")
+    console.log("[checkForWinner] winner found, " + player.toUpperCase())
     alert(player.toUpperCase() + " wins!")  //synchronous
     
     //todo draw line
     //rotate line asset?
-
+    
     gameover = true;
     restartGame();
+  } 
+  //if the current player hasn't won
+  else { 
+    //check if gameboard is full
+    let gameboardIsFull = true;
+    for(let arr of gameboard) {
+      for(let el of arr) {
+        if(el === null) {
+          gameboardIsFull = false; 
+          break; //no goto :(
+        }
+      }    
+      if(!gameboardIsFull) break; //goto
+    }
+  
+    //if the gameboard is full (and there was no winner)
+    if(gameboardIsFull) {
+      console.log("[checkForWinner] no winner found")
+      alert("No winner this time!")  //synchronous
+
+      gameover = true;
+      restartGame();
+    } //else carry on playing
   }
 }
 
 /**
- * 
+ * Search in a straight line (in a direction indicated by the direction arg) 
+ * for nodes containing strings matching the player arg
+ * until 3 consecutive hits, then return the path taken in an array
+ * or null if less than 3 consecutive hits were found.
  * @param {Array} start the 'starting point' node, an array of [x, y]
  * @param {Array} direction array of [+/-1 or 0, +/-1 or 0], to be added to nodes in order to search in that direction
  * @param {string} player 'x' or 'o'
+ * @returns an array of nodes denoting the path taken, or null
  */
 function recurse(start, direction, player) {
-  //general idea: choose initial direction and keep going in that direction until edge or 3 same
   let history = [start];
   
   return (function inner(current) {
@@ -155,7 +184,7 @@ function convertToCoords(num) {
 function restartGame() {
   //clear all playing pieces
   gameboard = [[null, null, null], [null, null, null], [null, null, null]];
-  console.log('[restartGame] resetting gameboard', gameboard);
+  console.log('[restartGame] resetting gameboard');
   //clear up images
   for(let box of boxes) {
     box.innerHTML = '';
