@@ -29,6 +29,10 @@ html, body {
   width: 100%;
 }
 
+.box:focus {
+  background-color: khaki;
+}
+
 .playing-piece {
   height: 100%;
   width: 100%;

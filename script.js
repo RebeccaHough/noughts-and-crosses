@@ -6,15 +6,19 @@ let gameboard = [[null, null, null], [null, null, null], [null, null, null]];
 //todo draw lines
 //todo fix box changing sizes
 
-//todo accessibility 
-//todo screen sizes
-//todo find a replacement for this: ?.
-
+//todo ugly focus highlight appears when clicking
 
 window.onload = function(e) {
   boxes = document.getElementsByClassName("box");
   for(let box = 0; box < boxes.length; box++) {
     boxes[box].addEventListener('click', addPlayingPiece.bind(this, boxes[box], convertToCoords(box)));
+    boxes[box].addEventListener('keydown', function() {
+      //debugging
+      //console.log(event.which, box)
+      //if enter is pressed
+      if(event.which === 13) {
+        addPlayingPiece(boxes[box], convertToCoords(box))
+    }}.bind(null, event, boxes, box));
   }
 }
 
@@ -38,13 +42,17 @@ function addPlayingPiece(box, coords) {
   let player;
   if(turn % 2 === 0 ) {
     //add nought
-    box.innerHTML = '<img src="./assets/nought.png" class="playing-piece"/>';
+    box.innerHTML = '<img src="./assets/nought.png" class="playing-piece" aria-label="nought"/>';
+    //remove focus
+    box.blur()
     //update gameboard arr
     player = 'o';
     gameboard[ coords[0] ][ coords[1] ] = player;
   } else {
     //add cross
-    box.innerHTML = '<img src="./assets/cross.png" class="playing-piece"/>';
+    box.innerHTML = '<img src="./assets/cross.png" class="playing-piece" aria-label="cross"/>';
+    //remove focus
+    box.blur()
     //update gameboard arr
     player = 'x';
     gameboard[ coords[0] ][ coords[1] ] = player;
@@ -55,12 +63,12 @@ function addPlayingPiece(box, coords) {
 }
 
 /**
- * 
+ * Check for line of 3 consecutive playing pieces, if winner found then alert the user, then reset the game 
  * @param {Array} boxClicked array of x and y coords of box clicked
  * @param {string} player 'x' or 'o'
  */
 function checkForWinner(boxClicked, player) {
-  //directions in clockwise order, but stored in pairs of oppsite directions
+  //directions in clockwise order from top left, but stored in pairs of oppsite directions
   // [0, 0] [0, 1] [0, 2]
   // [1, 0] [1, 1] [1, 2]
   // [2, 0] [2, 1] [2, 2]
@@ -71,21 +79,20 @@ function checkForWinner(boxClicked, player) {
     [ [ 0, +1] , [ 0, -1] ],
   ];
 
-  
-  //todo what about if two lines win
+  //do search for winner
+  //if there is more than one winning path, all winning paths will be returned & stored in answers
   let answers = [];
   for(let dir of directions) {
-    //do search for winner
-    let ansDir = recurse(boxClicked, dir, player);
-    console.log(ansDir);
-    if(ansDir) 
+    let ansDir = searchInDirection(boxClicked, dir, player);
+    if(ansDir)
       answers.push(ansDir);
   }
 
   //if the current player has won
   if(answers.length > 0) {
-    console.log("[checkForWinner] winner found, " + player.toUpperCase())
-    alert(player.toUpperCase() + " wins!")  //synchronous
+    console.log("[checkForWinner] winner found, " + player.toUpperCase());
+    console.log("[checkForWinner] winning path(s):", answers);
+    alert(player.toUpperCase() + " wins!");  //synchronous
     
     //todo draw line
     //rotate line asset?
@@ -119,7 +126,7 @@ function checkForWinner(boxClicked, player) {
 }
 
 /**
- * Search in a straight line (in a direction indicated by the direction arg) 
+ * Search along a straight line (in a direction indicated by the direction arg) 
  * for nodes containing strings matching the player arg
  * until 3 consecutive hits, then return the path taken in an array
  * or null if less than 3 consecutive hits were found.
@@ -129,7 +136,7 @@ function checkForWinner(boxClicked, player) {
  * @param {string} player 'x' or 'o'
  * @returns an array of nodes denoting the path taken, or null
  */
-function recurse(start, direction, player) {
+function searchInDirection(start, direction, player) {
   let history = [start];
   
   //use innerL and innerR to check both directions for any matching nodes
@@ -143,6 +150,7 @@ function recurse(start, direction, player) {
     current = [ current[0] + direction[0], current[1] + direction[1] ];
     //check one direction
     //will also fail in array out of bounds cases
+    //if IE compatibility is needed, use && chains instead of the unsupported ?.
     if(player === gameboard?.[current[0]]?.[current[1]]) {
       //push to hits list
       history.push(current);
@@ -165,6 +173,10 @@ function recurse(start, direction, player) {
   else return null;
 }
 
+/**
+ * Convert a number 0-9 to coordinates on a 3x3 grid, with top left being [0,0] and bottom right [2,2]
+ * @param {number} num 0-8
+ */
 function convertToCoords(num) {
   //do this a better way
   switch(num) {
