@@ -92,10 +92,13 @@ function checkForWinner(boxClicked, player) {
   if(answers.length > 0) {
     console.log("[checkForWinner] winner found, " + player.toUpperCase());
     console.log("[checkForWinner] winning path(s):", answers);
-    alert(player.toUpperCase() + " wins!");  //synchronous
     
-    //todo draw line
-    //rotate line asset?
+    //draw line
+    for(let ans in answers) {
+      drawLine(answers[ans]);
+    }
+    
+    alert(player.toUpperCase() + " wins!");  //synchronous
     
     gameover = true;
     restartGame();
@@ -214,4 +217,139 @@ function restartGame() {
   }
   turn = 1;
   gameover = false;
+}
+
+
+/* Canvas methods */
+function resizeCanvas() {
+
+}
+
+/**
+ * 
+ * @param {Array[]} coords array of 3 sets of coordinates for boxes on gameboard
+ */
+function drawLine(coords) {
+  //get the boxes' html elements from their coords
+  let startBox, middleBox, endBox;
+  let boxes = document.getElementsByClassName('box');
+  console.log(coords)
+  for(let box = 0; box < boxes.length; box++) {
+    let boxCoords = convertToCoords(box)
+    if(boxCoords.toString() === coords[0].toString())
+      startBox = boxes[box]
+    if(boxCoords.toString() === coords[1].toString())
+      middleBox = boxes[box]
+    if(boxCoords.toString() === coords[2].toString())
+      endBox = boxes[box]
+  }
+  let boxesAsHTML = [startBox, middleBox, endBox];
+  console.log(boxesAsHTML);
+  
+  //setup canvasses; add a canvas over each box
+  for(let box = 0; box < boxesAsHTML.length; box++) {
+    let canvas = boxesAsHTML[box].appendChild(document.createElement('canvas'));
+    //add styling/positioning
+    canvas.classList.add('canvas'); 
+    canvas.height = boxesAsHTML[box].offsetHeight;
+    canvas.width = boxesAsHTML[box].offsetWidth;
+
+    //determine the orientation of the lines
+    // [0, 0] [0, 1] [0, 2]
+    // [1, 0] [1, 1] [1, 2]
+    // [2, 0] [2, 1] [2, 2]
+    //e.g. coords = [[1, 0] [1, 1] [1, 2]] ==> horiz
+
+    let orientation, orientationEnd, orientationStart;
+
+    //for middle canvas
+    //if all arr[0] are the same
+    if(coords[0][0].toString() === coords[1][0].toString() === coords[2][0].toString())
+      orientation = 'horiz';
+    //if all arr[1] are the same
+    if(coords[0][1].toString() === coords[1][1].toString() === coords[2][1].toString())
+      orientation = 'vert';
+    //if all arr[0, 1] increment each time,
+    if(coords[0][0].toString() === coords[1][0].toString() === coords[2][0].toString())
+      orientation = 'leftDiag';
+    //if all arr[0] increments each time, and arr[1] decrements each time
+    if(coords[0][0].toString() === coords[1][0].toString() === coords[2][0].toString())
+      orientation = 'rightDiag';
+
+    //draw the line
+    if(box === 1)
+      drawLineCenter(canvas, orientation);
+    else if(box === 0)
+      drawLineEnd(canvas, orientation, true); 
+    else if(box === 2)
+      drawLineEnd(canvas, orientation, false);
+  }
+}
+
+function cleanupCanvas() {
+  //for(canvas)
+  //remove canvas
+}
+
+function drawLineCenter(canvas, orientation) {
+  let ctx = canvas.getContext("2d");
+  switch(orientation) {
+    case horiz:
+      ctx.moveTo(0, canvas.width/2);
+      ctx.lineTo(canvas.height, canvas.width/2);
+      break;
+    case vert:
+      ctx.moveTo(canvas.width/2, 0);
+      ctx.lineTo(canvas.height, canvas.width/2); //todo
+      break;
+    case leftDiag:
+    case rightDiag:
+      ctx.moveTo(0, 0);
+      ctx.lineTo(canvas.height, canvas.width);
+      break;
+  }
+  ctx.stroke();
+}
+
+/**
+ * Draws a line from the center of the canvas to one of the corners
+ * @param {*} canvas 
+ * @param {*} orientation 
+ * @param {Boolean} start determines which way the line should face along the orientation
+ */
+function drawLineEnd(canvas, orientation, start) {
+  //orientation
+  //if !start then draw end piece
+  let ctx = canvas.getContext("2d");
+  switch(orientation) {
+    case horiz:
+      ctx.moveTo(canvas.height/2, canvas.width/2);
+      if(start)
+        ctx.lineTo(canvas.height/2, canvas.width);
+      else
+        ctx.lineTo(0, canvas.width/2);
+      break;
+      //todo all the rest
+    case vert:
+      ctx.moveTo(canvas.height/2, canvas.width/2);
+      if(start)
+        ctx.lineTo(canvas.height, canvas.width/2);
+      else
+        ctx.lineTo(canvas.height, canvas.width/2);
+      break;
+    case leftDiag:
+      ctx.moveTo(canvas.height/2, canvas.width/2);
+      if(start)
+        ctx.lineTo(canvas.height, canvas.width/2);
+      else
+        ctx.lineTo(canvas.height, canvas.width/2);
+    case rightDiag:
+      ctx.moveTo(canvas.height/2, canvas.width/2);
+      if(start)
+        ctx.lineTo(canvas.height, canvas.width/2);
+      else
+        ctx.lineTo(canvas.height, canvas.width/2);
+      break;
+  }
+  ctx.stroke();
 }

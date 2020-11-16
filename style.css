@@ -27,10 +27,17 @@ html, body {
 
 .box {
   width: 100%;
+  position: relative;
 }
 
 .box:focus {
   background-color: khaki;
+}
+
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .playing-piece {
